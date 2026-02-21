@@ -1,0 +1,237 @@
+{
+  "generated_at": "2026-02-21 19:58:35",
+  "total_stocks": 22,
+  "buy_count": 2,
+  "sell_count": 1,
+  "buy_signals": [
+    {
+      "symbol": "700",
+      "name": "騰訊",
+      "close": 522,
+      "rsi_14": 25.1,
+      "signal": "BUY",
+      "reason": "RSI(25.1) 超賣",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "3690",
+      "name": "美團",
+      "close": 80.75,
+      "rsi_14": 18.82,
+      "signal": "BUY",
+      "reason": "RSI(18.8) 超賣",
+      "date": "2026-02-20"
+    }
+  ],
+  "sell_signals": [
+    {
+      "symbol": "0016",
+      "name": "恒大地產",
+      "close": 135.7,
+      "rsi_14": 78.67,
+      "signal": "SELL",
+      "reason": "RSI(78.7) 超買",
+      "date": "2026-02-20"
+    }
+  ],
+  "all_stocks": [
+    {
+      "symbol": "700",
+      "name": "騰訊",
+      "close": 522,
+      "rsi_14": 25.1,
+      "signal": "BUY",
+      "reason": "RSI(25.1) 超賣",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "3690",
+      "name": "美團",
+      "close": 80.75,
+      "rsi_14": 18.82,
+      "signal": "BUY",
+      "reason": "RSI(18.8) 超賣",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "9988",
+      "name": "阿里巴巴",
+      "close": 147.1,
+      "rsi_14": 35.69,
+      "signal": "HOLD",
+      "reason": "RSI(35.7) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "9618",
+      "name": "京東",
+      "close": 103.8,
+      "rsi_14": 32.33,
+      "signal": "HOLD",
+      "reason": "RSI(32.3) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "1024",
+      "name": "快手",
+      "close": 66.5,
+      "rsi_14": 34.56,
+      "signal": "HOLD",
+      "reason": "RSI(34.6) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "939",
+      "name": "建設銀行",
+      "close": 8.04,
+      "rsi_14": 56.94,
+      "signal": "HOLD",
+      "reason": "RSI(56.9) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "3988",
+      "name": "中國銀行",
+      "close": 4.67,
+      "rsi_14": 57.45,
+      "signal": "HOLD",
+      "reason": "RSI(57.4) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "0005",
+      "name": "HSBC",
+      "close": 134.3,
+      "rsi_14": 52.53,
+      "signal": "HOLD",
+      "reason": "RSI(52.5) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "2388",
+      "name": "港交所",
+      "close": 43.78,
+      "rsi_14": 69.75,
+      "signal": "HOLD",
+      "reason": "RSI(69.8) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "1113",
+      "name": "長實",
+      "close": 46.8,
+      "rsi_14": 62.83,
+      "signal": "HOLD",
+      "reason": "RSI(62.8) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "0016",
+      "name": "恒大地產",
+      "close": 135.7,
+      "rsi_14": 78.67,
+      "signal": "SELL",
+      "reason": "RSI(78.7) 超買",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "0012",
+      "name": "恒地",
+      "close": 33.68,
+      "rsi_14": 68.46,
+      "signal": "HOLD",
+      "reason": "RSI(68.5) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "0001",
+      "name": "長江",
+      "close": 63.2,
+      "rsi_14": 54.0,
+      "signal": "HOLD",
+      "reason": "RSI(54.0) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "1109",
+      "name": "置地",
+      "close": 31.16,
+      "rsi_14": 55.82,
+      "signal": "HOLD",
+      "reason": "RSI(55.8) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "0762",
+      "name": "中國移動",
+      "close": 7.43,
+      "rsi_14": 43.14,
+      "signal": "HOLD",
+      "reason": "RSI(43.1) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "6822",
+      "name": "香港電訊",
+      "close": 0.4,
+      "rsi_14": 36.54,
+      "signal": "HOLD",
+      "reason": "RSI(36.5) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "0883",
+      "name": "中海油",
+      "close": 25.7,
+      "rsi_14": 67.43,
+      "signal": "HOLD",
+      "reason": "RSI(67.4) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "0857",
+      "name": "中石油",
+      "close": 9.52,
+      "rsi_14": 63.33,
+      "signal": "HOLD",
+      "reason": "RSI(63.3) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "291",
+      "name": "華潤啤酒",
+      "close": 26,
+      "rsi_14": 42.48,
+      "signal": "HOLD",
+      "reason": "RSI(42.5) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "2319",
+      "name": "蒙牛乳業",
+      "close": 16.67,
+      "rsi_14": 54.15,
+      "signal": "HOLD",
+      "reason": "RSI(54.2) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "1177",
+      "name": "中國生物製藥",
+      "close": 6.65,
+      "rsi_14": 51.18,
+      "signal": "HOLD",
+      "reason": "RSI(51.2) 中性",
+      "date": "2026-02-20"
+    },
+    {
+      "symbol": "2269",
+      "name": "藥明生物",
+      "close": 40.3,
+      "rsi_14": 60.66,
+      "signal": "HOLD",
+      "reason": "RSI(60.7) 中性",
+      "date": "2026-02-20"
+    }
+  ]
+}
