@@ -22,6 +22,7 @@ const pool = new Pool({
 });
 
 // EJFQ Headers
+const WORKER_URL = 'https://hkstockdata.garysze77.workers.dev/?url=';
 const EJFQ_HEADERS = {
   'authority': 'www.ejfq.com',
   'accept': '*/*',
@@ -74,7 +75,7 @@ function calculateRSI(prices, period = 14) {
 // Fetch stock data
 async function fetchStockData(symbol) {
   try {
-    const url = `https://www.ejfq.com/home/tc/tradingview3_360/php/chartfeed.php?symbol=${symbol}&resolution=D&method=history`;
+    const targetUrl = encodeURIComponent(`https://www.ejfq.com/home/tc/tradingview3_360/php/chartfeed.php?symbol=${symbol}&resolution=D&method=history`); const url = WORKER_URL + targetUrl;
     const response = await axios.get(url, { headers: EJFQ_HEADERS });
     return response.data;
   } catch (error) {
