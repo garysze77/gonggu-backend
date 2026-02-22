@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-GongGu ML Training Module
-Uses all technical indicators as features for ML prediction
+GongGu ML Training Module - Version 2
+Uses ALL historical daily data as training samples
 """
 
 import yfinance as yf
@@ -41,130 +41,124 @@ STOCK_NAMES = {
     'HSI': '恆生指數', 'HSCEI': '國企指數',
 }
 
-def calculate_rsi(prices, period=14):
-    """Calculate RSI"""
-    if len(prices) < period + 1:
+def calculate_features_for_date(closes, highs, lows, volumes, idx):
+    """Calculate all features for a specific date index"""
+    if idx < 60:  # Need at least 60 days of history
         return None
-    delta = pd.Series(prices).diff()
-    gain = delta.where(delta > 0, 0).rolling(window=period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    
+    prices = closes[:idx+1]
+    
+    features = {}
+    
+    # RSI (last 14 days before current)
+    delta = prices.diff()
+    gain = delta.where(delta > 0, 0).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
-    return rsi.iloc[-1] if not rsi.empty else None
-
-def calculate_ema(prices, period):
-    """Calculate EMA"""
-    return pd.Series(prices).ewm(span=period, adjust=False).mean().iloc[-1]
-
-def calculate_ma(prices, period):
-    """Calculate MA"""
-    return pd.Series(prices).rolling(window=period).mean().iloc[-1]
-
-def calculate_macd(prices):
-    """Calculate MACD"""
-    ema12 = pd.Series(prices).ewm(span=12, adjust=False).mean()
-    ema26 = pd.Series(prices).ewm(span=26, adjust=False).mean()
+    features['rsi14'] = rsi.iloc[-1] if not rsi.empty else 50
+    
+    # MACD
+    ema12 = prices.ewm(span=12, adjust=False).mean()
+    ema26 = prices.ewm(span=26, adjust=False).mean()
     macd_line = ema12 - ema26
     signal_line = macd_line.ewm(span=9, adjust=False).mean()
-    histogram = macd_line.iloc[-1] - signal_line.iloc[-1]
-    return macd_line.iloc[-1], signal_line.iloc[-1], histogram
+    features['macd_histogram'] = (macd_line.iloc[-1] - signal_line.iloc[-1]) if not macd_line.empty else 0
+    
+    # Moving Averages
+    features['ma5'] = prices.rolling(window=5).mean().iloc[-1]
+    features['ma10'] = prices.rolling(window=10).mean().iloc[-1]
+    features['ma20'] = prices.rolling(window=20).mean().iloc[-1]
+    features['ma50'] = prices.rolling(window=50).mean().iloc[-1]
+    
+    # MA Crossovers
+    features['ma5_above_ma20'] = 1 if features['ma5'] > features['ma20'] else 0
+    features['ma5_above_ma50'] = 1 if features['ma5'] > features['ma50'] else 0
+    
+    # Bollinger Bands
+    ma20 = prices.rolling(window=20).mean()
+    std20 = prices.rolling(window=20).std()
+    bb_upper = ma20 + (std20 * 2)
+    bb_lower = ma20 - (std20 * 2)
+    features['bb_position'] = (prices.iloc[-1] - bb_lower.iloc[-1]) / (bb_upper.iloc[-1] - bb_lower.iloc[-1]) if bb_upper.iloc[-1] != bb_lower.iloc[-1] else 0.5
+    
+    # Volume
+    vol_ma = volumes.rolling(window=20).mean()
+    features['volume_ratio'] = volumes.iloc[-1] / vol_ma.iloc[-1] if vol_ma.iloc[-1] > 0 else 1
+    
+    # Momentum
+    features['momentum_5'] = prices.iloc[-1] / prices.iloc[-6] - 1 if len(prices) >= 6 else 0
+    features['momentum_10'] = prices.iloc[-1] / prices.iloc[-11] - 1 if len(prices) >= 11 else 0
+    
+    # Volatility
+    returns = prices.pct_change()
+atility'] = features['vol.rolling(window=20).std().iloc[-1] if not returns.empty else 0
+    
+    # Price position
+    features['price_to_high'] = prices.iloc[-1] / highs.iloc[-20:].max() if len(highs) >= 20 else 1
+    features['price_to_low'] = prices.iloc[-1] / lows.iloc[-20:].min() if len(lows) >= 20 else 1
+    
+    # Target: Next day direction (1=up, 0=down)
+    # Need to look at the NEXT day
+    if idx + 1 < len(closes):
+        features['target'] = 1 if closes.iloc[idx+1] > closes.iloc[idx] else 0
+    else:
+        return None  # Can't determine target for the last day
+    
+    return features
 
-def calculate_bollinger(prices, period=20):
-    """Calculate Bollinger Bands"""
-    ma = prices.rolling(window=period).mean()
-    std = prices.rolling(window=period).std()
-    upper = ma + (std * 2)
-    lower = ma - (std * 2)
-    return upper.iloc[-1], ma.iloc[-1], lower.iloc[-1]
-
-def fetch_and_features(symbol):
-    """Fetch stock data and calculate all features"""
+def fetch_and_prepare_all_data(symbol):
+    """Fetch ALL historical data and create training samples for each day"""
     try:
+        print(f"  Processing {symbol}...")
         ticker = yf.Ticker(symbol)
         df = ticker.history(period='2y')
         
-        if df.empty or len(df) < 60:
-            return None
+        if df.empty or len(df) < 120:  # Need at least 120 days
+            return []
         
         closes = df['Close']
         highs = df['High']
         lows = df['Low']
         volumes = df['Volume']
         
-        features = {}
+        all_samples = []
         
-        # RSI
-        features['rsi14'] = calculate_rsi(closes, 14)
+        # Create a training sample for each day (starting from day 60)
+        for idx in range(60, len(closes) - 1):  # -1 because we need next day for target
+            features = calculate_features_for_date(closes, highs, lows, volumes, idx)
+            if features:
+                features['symbol'] = symbol.replace('.HK', '')
+                features['date'] = closes.index[idx].strftime('%Y-%m-%d')
+                features['close'] = closes.iloc[idx]
+                all_samples.append(features)
         
-        # MACD
-        macd, signal, hist = calculate_macd(closes)
-        features['macd'] = macd
-        features['macd_signal'] = signal
-        features['macd_histogram'] = hist
-        
-        # Moving Averages
-        features['ma5'] = calculate_ma(closes, 5)
-        features['ma10'] = calculate_ma(closes, 10)
-        features['ma20'] = calculate_ma(closes, 20)
-        features['ma50'] = calculate_ma(closes, 50)
-        
-        # MA Crossovers
-        features['ma5_above_ma20'] = 1 if features['ma5'] > features['ma20'] else 0
-        features['ma5_above_ma50'] = 1 if features['ma5'] > features['ma50'] else 0
-        
-        # Bollinger Bands
-        bb_upper, bb_middle, bb_lower = calculate_bollinger(closes)
-        features['bb_upper'] = bb_upper
-        features['bb_middle'] = bb_middle
-        features['bb_lower'] = bb_lower
-        features['bb_position'] = (closes.iloc[-1] - bb_lower) / (bb_upper - bb_lower) if bb_upper != bb_lower else 0.5
-        
-        # Volume
-        vol_ma = volumes.rolling(window=20).mean().iloc[-1]
-        features['volume_ratio'] = volumes.iloc[-1] / vol_ma if vol_ma > 0 else 1
-        
-        # Momentum
-        features['momentum_5'] = (closes.iloc[-1] / closes.iloc[-6] - 1) if len(closes) >= 6 else 0
-        features['momentum_10'] = (closes.iloc[-1] / closes.iloc[-11] - 1) if len(closes) >= 11 else 0
-        
-        # Volatility
-        features['volatility'] = returns = closes.pct_change().rolling(window=20).std().iloc[-1]
-        
-        # Price position
-        features['price_to_high'] = closes.iloc[-1] / highs.iloc[-20:].max() if len(highs) >= 20 else 1
-        features['price_to_low'] = closes.iloc[-1] / lows.iloc[-20:].min() if len(lows) >= 20 else 1
-        
-        # Target: Next day direction (1=up, 0=down)
-        features['target'] = 1 if closes.iloc[-1] > closes.iloc[-2] else 0
-        
-        features['symbol'] = symbol.replace('.HK', '')
-        features['close'] = closes.iloc[-1]
-        
-        return features
+        return all_samples
         
     except Exception as e:
-        print(f"Error processing {symbol}: {e}")
-        return None
+        print(f"    Error: {e}")
+        return []
 
 def prepare_training_data():
-    """Prepare training data from all stocks"""
-    print("📊 Fetching data and calculating features...")
+    """Prepare training data from ALL historical data"""
+    print("\n📊 Fetching ALL historical data and calculating features...")
     
-    all_features = []
+    all_samples = []
     
     for i, symbol in enumerate(STOCKS):
-        print(f"  [{i+1}/{len(STOCKS)}] Processing {symbol}...")
-        features = fetch_and_features(symbol)
-        if features:
-            all_features.append(features)
+        print(f"  [{i+1}/{len(STOCKS)}]", end=" ")
+        samples = fetch_and_prepare_all_data(symbol)
+        all_samples.extend(samples)
+        if samples:
+            print(f"→ {len(samples)} samples")
     
-    if not all_features:
+    if not all_samples:
         print("❌ No data collected")
         return None, None
     
-    df = pd.DataFrame(all_features)
+    df = pd.DataFrame(all_samples)
     
-    # Feature columns (all indicators)
+    # Feature columns
     feature_cols = [
         'rsi14', 'macd_histogram', 'ma5_above_ma20', 'ma5_above_ma50',
         'bb_position', 'volume_ratio', 'momentum_5', 'momentum_10',
@@ -174,14 +168,10 @@ def prepare_training_data():
     # Drop rows with NaN
     df = df.dropna(subset=feature_cols + ['target'])
     
-    if len(df) < 30:
-        print("❌ Not enough data for training")
-        return None, None
-    
     X = df[feature_cols].values
     y = df['target'].values
     
-    print(f"✅ Total samples: {len(X)}")
+    print(f"\n✅ Total training samples: {len(X)}")
     print(f"   Up days: {sum(y)} ({sum(y)/len(y)*100:.1f}%)")
     print(f"   Down days: {len(y)-sum(y)} ({(len(y)-sum(y))/len(y)*100:.1f}%)")
     
@@ -189,9 +179,9 @@ def prepare_training_data():
 
 def train_model():
     """Train the ML model"""
-    print("\n" + "="*50)
-    print("🎯 Training ML Model")
-    print("="*50)
+    print("\n" + "="*60)
+    print("🎯 Training ML Model with ALL Historical Data")
+    print("="*60)
     
     X, y = prepare_training_data()
     
@@ -211,9 +201,10 @@ def train_model():
     # Train model
     print("\n🔧 Training Gradient Boosting...")
     model = GradientBoostingClassifier(
-        n_estimators=100,
-        max_depth=4,
+        n_estimators=150,
+        max_depth=5,
         learning_rate=0.1,
+        min_samples_split=10,
         random_state=42
     )
     model.fit(X_train_scaled, y_train)
@@ -255,10 +246,10 @@ def train_model():
     return model_data
 
 def generate_predictions(model_data=None):
-    """Generate predictions for all stocks"""
-    print("\n" + "="*50)
+    """Generate predictions for current day"""
+    print("\n" + "="*60)
     print("🔮 Generating Predictions")
-    print("="*50)
+    print("="*60)
     
     if model_data is None:
         model_path = '/tmp/gonggu_ml_model.pkl'
@@ -274,36 +265,53 @@ def generate_predictions(model_data=None):
     predictions = []
     
     for symbol in STOCKS:
-        features = fetch_and_features(symbol)
-        if not features:
-            continue
-        
-        # Prepare features
-        feature_cols = [
-            'rsi14', 'macd_histogram', 'ma5_above_ma20', 'ma5_above_ma50',
-            'bb_position', 'volume_ratio', 'momentum_5', 'momentum_10',
-            'volatility', 'price_to_high', 'price_to_low'
-        ]
-        
-        X = np.array([[features[f] for f in feature_cols]])
-        X_scaled = scaler.transform(X)
-        
-        # Predict
-        pred = model.predict(X_scaled)[0]
-        proba = model.predict_proba(X_scaled)[0]
-        
-        predictions.append({
-            'symbol': features['symbol'],
-            'name': STOCK_NAMES.get(features['symbol'], features['symbol']),
-            'close': round(features['close'], 2),
-            'ml_prediction': 'BUY' if pred == 1 else 'SELL',
-            'ml_confidence': round(max(proba) * 100, 1),
-            'ml_buy_prob': round(proba[1] * 100, 1),
-            'ml_sell_prob': round(proba[0] * 100, 1)
-        })
-        
-        emoji = "🟢" if pred == 1 else "🔴"
-        print(f"{emoji} {features['symbol']}: {'BUY' if pred == 1 else 'SELL'} ({max(proba)*100:.1f}%)")
+        try:
+            ticker = yf.Ticker(symbol)
+            df = ticker.history(period='2y')
+            
+            if df.empty or len(df) < 60:
+                continue
+            
+            closes = df['Close']
+            highs = df['High']
+            lows = df['Low']
+            volumes = df['Volume']
+            
+            # Get features for the last day
+            features = calculate_features_for_date(closes, highs, lows, volumes, len(closes) - 1)
+            
+            if not features:
+                continue
+            
+            # Prepare features
+            feature_cols = [
+                'rsi14', 'macd_histogram', 'ma5_above_ma20', 'ma5_above_ma50',
+                'bb_position', 'volume_ratio', 'momentum_5', 'momentum_10',
+                'volatility', 'price_to_high', 'price_to_low'
+            ]
+            
+            X = np.array([[features[f] for f in feature_cols]])
+            X_scaled = scaler.transform(X)
+            
+            # Predict
+            pred = model.predict(X_scaled)[0]
+            proba = model.predict_proba(X_scaled)[0]
+            
+            predictions.append({
+                'symbol': features['symbol'],
+                'name': STOCK_NAMES.get(features['symbol'], features['symbol']),
+                'close': round(features['close'], 2),
+                'ml_prediction': 'BUY' if pred == 1 else 'SELL',
+                'ml_confidence': round(max(proba) * 100, 1),
+                'ml_buy_prob': round(proba[1] * 100, 1),
+                'ml_sell_prob': round(proba[0] * 100, 1)
+            })
+            
+            emoji = "🟢" if pred == 1 else "🔴"
+            print(f"{emoji} {features['symbol']}: {'BUY' if pred == 1 else 'SELL'} ({max(proba)*100:.1f}%)")
+            
+        except Exception as e:
+            print(f"  Error with {symbol}: {e}")
     
     # Save predictions
     output_path = '/tmp/gonggu_predictions.json'
